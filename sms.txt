@@ -1,0 +1,160 @@
+<LinearLayout
+ android:layout_width="wrap_content"
+ android:layout_height="match_parent"
+ android:orientation="vertical"
+ app:layout_constraintEnd_toEndOf="parent"
+ app:layout_constraintStart_toStartOf="parent">
+ <TextView
+ android:layout_width="match_parent"
+ android:layout_height="wrap_content"
+ android:gravity="center"
+ android:textSize="30dp"
+ android:text="SMS Application"/>
+<LinearLayout
+ android:layout_width="wrap_content"
+ android:layout_height="wrap_content"
+ android:orientation="horizontal">
+ <TextView
+ android:layout_width="wrap_content"
+ android:layout_height="wrap_content"
+ android:gravity="center"
+ android:textSize="30dp"
+ android:text="Name:"/>
+ <EditText
+ android:layout_width="250dp"
+ android:layout_height="50dp"
+ android:layout_gravity="top"
+ android:id="@+id/name"/>
+ <ImageButton
+ android:layout_width="50dp"
+ android:layout_height="50dp"
+ android:id="@+id/ib"
+ android:src="@drawable/ic_launcher_background"/>
+</LinearLayout>
+<LinearLayout
+ android:layout_width="wrap_content"
+ android:layout_height="wrap_content"
+ android:orientation="horizontal">
+ <TextView
+ android:layout_width="wrap_content"
+ android:layout_height="wrap_content"
+ android:gravity="center"
+ android:textSize="30dp"
+ android:text="Number:"/>
+ <EditText
+ android:layout_width="400dp"
+ android:layout_height="50dp"
+ android:layout_gravity="top"
+ android:id="@+id/Number"/>
+</LinearLayout>
+<LinearLayout
+ android:layout_width="wrap_content"
+ android:layout_height="wrap_content"
+ android:orientation="horizontal">
+ <TextView
+ android:layout_width="wrap_content"
+ android:layout_height="wrap_content"
+ android:gravity="center"
+ android:textSize="30dp"
+ android:text="Message:"/>
+ <EditText
+ android:layout_width="400dp"
+ android:layout_height="50dp"
+ android:layout_gravity="top"
+ android:id="@+id/message"/>
+</LinearLayout>
+ <Button
+ android:layout_width="wrap_content"
+ android:layout_height="wrap_content"
+ android:layout_gravity="center"
+ android:clickable="true"
+ android:text="Send SMS"
+ android:id="@+id/Send_sms"/>
+</LinearLayout>
+public class MainActivity extends AppCompatActivity {
+ String pn, mess;
+ Button send_sms;
+ ImageButton ib;
+ EditText na, num, message;
+ @Override
+ protected void onCreate(Bundle savedInstanceState) {
+ super.onCreate(savedInstanceState);
+ setContentView(layout.activity_main);
+ Intent pickcontact = new Intent(
+ Intent.ACTION_PICK,
+ ContactsContract.CommonDataKinds.Phone.CONTENT_URI);
+ Toast t = new Toast(this);
+ na = findViewById(id.name);
+ num = findViewById(id.Number);
+ message = findViewById(R.id.message);
+ ib = findViewById(id.ib);
+ send_sms = findViewById(id.Send_sms);
+ ib.setOnClickListener(new View.OnClickListener() {
+ @Override
+ public void onClick(View view) {
+ startActivityForResult(pickcontact, 1);
+ }
+ });
+ requestContactsPermission();
+ send_sms.setOnClickListener(new View.OnClickListener() {
+ @Override
+ public void onClick(View view) {
+ pn = num.getText().toString();
+ mess = message.getText().toString();
+ if (pn.equalsIgnoreCase("") || mess.equalsIgnoreCase("")) {
+ t.setText("phone number or message is empty");
+ t.setDuration(Toast.LENGTH_SHORT);
+ t.show();
+ na.requestFocus();
+ } else {
+ SmsManager smsManager = SmsManager.getDefault();
+ smsManager.sendTextMessage(pn, null, mess, null, null);
+ t.setText("SMS Sent");
+ t.setDuration(Toast.LENGTH_SHORT);
+ t.show();
+ }
+ }
+ });
+ }
+  private void requestContactsPermission() {
+ if (!hasContactsPermission()) {
+ ActivityCompat.requestPermissions(this,
+ new String[]{Manifest.permission.READ_CONTACTS}, 1);
+ }
+ if (!hasSendSMSPermission()) {
+ ActivityCompat.requestPermissions(this,
+ new String[]{Manifest.permission.SEND_SMS}, 1);
+ }
+ }
+ private boolean hasContactsPermission() {
+ return ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS)
+==
+ PackageManager.PERMISSION_GRANTED;
+ }
+ private boolean hasSendSMSPermission() {
+ return ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) ==
+ PackageManager.PERMISSION_GRANTED;
+ }
+ @SuppressLint({"SuspiciousIndentation", "Range"})
+ @Override
+ protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+ super.onActivityResult(requestCode, resultCode, data);
+ if (resultCode != Activity.RESULT_OK) return;
+ Uri contactUri = data.getData();
+ Cursor cursor = this.getContentResolver().query(contactUri,new String[]{"display_name","data1"},
+ null,
+ null,
+ null);
+ try {
+ if (cursor.getCount() == 0) return;
+ cursor.moveToFirst();
+ na.setText(cursor.getString(0));
+ num.setText(cursor.getString(1));
+ } finally {
+ System.out.println("in phone cursor");
+ }
+ }
+}
+<uses-permission android:name="android.permission.SEND_SMS"/>
+<uses-permission android:name="android.permission.READ_CONTACTS"/>
+<uses-permission android:name="android.permission.WRITE_CONTACTS"/>
